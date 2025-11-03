@@ -1,32 +1,25 @@
 import pandas as pd
-from scipy.cluster.hierarchy import linkage, dendrogram
-from scipy.spatial.distance import pdist
+import seaborn as sns
+from scipy.spatial.distance import pdist, squareform
 import matplotlib.pyplot as plt
 
 # read an Excel file, the real path on PC is hidden
-df = pd.read_excel('D:/.../6genes.xlsx', index_col=0)
+df = pd.read_excel("D:/.../6genes.xlsx", index_col=0)
+df_zscore = (df - df.mean()) / df.std()
 
 # calculate Euclidean distance
-distance_matrix = pdist(df.values, metric='euclidean')
+dist_condensed = pdist(df.values, metric='euclidean')
 
 # Construct a DataFrame of the distance matrix for easy viewing.
-distance_df = pd.DataFrame(distance_matrix, index=df.index, columns=df.index)
-# write the distance matrix to excel file
+dist_square = squareform(dist_condensed)
+distance_df = pd.DataFrame(dist_square, index=df.index, columns=df.index)
+
+# write the distance matrix to an Excel file
 distance_df.to_excel('gene_euclidean_distance_matrix.xlsx')
 
 # hierarchical clustering using average linkage
-Z = linkage(distance_matrix, method='average')
+cm = sns.clustermap(df_zscore.T, figsize=(10, 8),
+               row_cluster=True, col_cluster=True, yticklabels=False)
+cm.ax_heatmap.set_xticklabels(cm.ax_heatmap.get_xticklabels(), fontsize=8)
 
-# draw a clustering dendrogram
-plt.figure(figsize=(12, 6))
-dendrogram(
-    Z,
-    labels=df.index,           # gene probe as lable
-    leaf_rotation=90,          # angle of lable rotation
-    leaf_font_size=10,
-)
-plt.title('Hierarchical Clustering Dendrogram (Average Linkage, Euclidean Distance)')
-plt.xlabel('Gene Probe ID')
-plt.ylabel('Distance')
-plt.tight_layout()
 plt.show()
